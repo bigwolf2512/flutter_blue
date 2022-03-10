@@ -257,8 +257,8 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
                     break;
                 }
                 bluetooth = Bluetooth.getBluetooth(activity);
-                initBT();
                 startScan(call, result);
+                initBT();
 
                 break;
             }
@@ -453,7 +453,7 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
                         }
 
                     } catch (Exception e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
                     }
                 }
 

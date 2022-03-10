@@ -130,13 +130,6 @@ class FlutterBlue {
       throw e;
     }
 
-    FlutterBlue.instance._methodStream.listen((event) {
-      if (event.method == "ScanPosResult") {
-        print("event: ${event.arguments}");
-        _scanPosResult.add(event.arguments);
-      }
-    });
-
     yield* FlutterBlue.instance._methodStream
         .where((m) => m.method == "ScanResult")
         .map((m) => m.arguments)
@@ -154,6 +147,13 @@ class FlutterBlue {
       }
       _scanResults.add(list);
       return result;
+    });
+
+    FlutterBlue.instance._methodStream.listen((event) {
+      if (event.method == "ScanPosResult") {
+        print("event: ${event.arguments}");
+        _scanPosResult.add(event.arguments);
+      }
     });
   }
 
