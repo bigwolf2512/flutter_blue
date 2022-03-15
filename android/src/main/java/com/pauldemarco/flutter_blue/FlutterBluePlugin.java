@@ -35,10 +35,15 @@ import android.util.Log;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import androidx.core.app.ActivityCompat;
@@ -82,7 +87,7 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
 
     private Bluetooth bluetooth;
 
-    private String address;
+//    private String address;
 
 
     private static final int REQUEST_FINE_LOCATION_PERMISSIONS = 1452;
@@ -438,10 +443,10 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
                 break;
             }
 
-            case "writeCharacteristic": {
-                byte[] data = call.arguments();
 
-
+            case "writePosCharacteristic":{
+                final byte[] data = (byte[]) ((Map<?, ?>) call.arguments()).get("value");
+                final String address = call.argument("address");
                 if (address != null) {
                     try {
                         final int resultPrint = Print.PortOpen(context, "Bluetooth," + address);
@@ -451,13 +456,16 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
                             Print.PortClose();
                             return;
                         }
-
                     } catch (Exception e) {
-//                        e.printStackTrace();
+                        Log.d("xxxxx",e.getMessage());
+                        e.printStackTrace();
                     }
                 }
 
-
+                break;
+            }
+            case "writeCharacteristic": {
+                byte[] data = call.arguments();
                 Protos.WriteCharacteristicRequest request;
                 try {
                     request = Protos.WriteCharacteristicRequest.newBuilder().mergeFrom(data).build();
@@ -471,24 +479,24 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
                 try {
                     gattServer = locateGatt(request.getRemoteId());
                     characteristic = locateCharacteristic(gattServer, request.getServiceUuid(), request.getSecondaryServiceUuid(), request.getCharacteristicUuid());
-                } catch (Exception e) {
+                } catch(Exception e) {
                     result.error("write_characteristic_error", e.getMessage(), null);
                     return;
                 }
 
                 // Set characteristic to new value
-                if (!characteristic.setValue(request.getValue().toByteArray())) {
+                if(!characteristic.setValue(request.getValue().toByteArray())){
                     result.error("write_characteristic_error", "could not set the local value of characteristic", null);
                 }
 
                 // Apply the correct write type
-                if (request.getWriteType() == Protos.WriteCharacteristicRequest.WriteType.WITHOUT_RESPONSE) {
+                if(request.getWriteType() == Protos.WriteCharacteristicRequest.WriteType.WITHOUT_RESPONSE) {
                     characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
                 } else {
                     characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                 }
 
-                if (!gattServer.writeCharacteristic(characteristic)) {
+                if(!gattServer.writeCharacteristic(characteristic)){
                     result.error("write_characteristic_error", "writeCharacteristic failed", null);
                     return;
                 }
@@ -1018,22 +1026,28 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
 
 
     private void initBT() {
-        Log.d("TAG", "initBT:xxxx");
+//        Log.d("TAG", "initBT:xxxx");
 
         bluetooth.doDiscovery();
         bluetooth.getData(new Bluetooth.toData() {
             @Override
-            public void succeed(String BTname, String BTmac) {
-                Log.d(TAG, "BTname:" + BTname);
-                Log.d(TAG, "BTmac:" + BTmac);
-                address = BTmac;
-                activity.runOnUiThread(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                channel.invokeMethod("ScanPosResult", address);
-                            }
-                        });
+            public void succeed(String BTname, final String BTmac) {
+//                Log.d(TAG, "BTname:" + BTname);
+//                Log.d(TAG, "BTmac:" + BTmac);
+//                address = BTmac;
+                final HashMap map= new HashMap();
+                map.put("name",BTname);
+                map.put("address",BTmac);
+                if(!Objects.equals(BTname, "") && BTname!=null){
+                    activity.runOnUiThread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    channel.invokeMethod("ScanPosResult", map);
+                                }
+                            });
+                }
+
 
             }
         });

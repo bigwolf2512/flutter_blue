@@ -43,7 +43,7 @@ class FlutterBlue {
 
   BehaviorSubject<List<ScanResult>> _scanResults = BehaviorSubject.seeded([]);
 
-  BehaviorSubject _scanPosResult=BehaviorSubject();
+  BehaviorSubject _scanPosResult = BehaviorSubject();
 
   /// Returns a stream that is a list of [ScanResult] results while a scan is in progress.
   ///
@@ -53,8 +53,8 @@ class FlutterBlue {
   /// One use for [scanResults] is as the stream in a StreamBuilder to display the
   /// results of a scan in real time while the scan is in progress.
   Stream<List<ScanResult>> get scanResults => _scanResults.stream;
-  Stream get scanPosResult => _scanPosResult.stream;
 
+  Stream get scanPosResult => _scanPosResult.stream;
 
   PublishSubject _stopScanPill = new PublishSubject();
 
@@ -85,6 +85,11 @@ class FlutterBlue {
       // Send the log level to the underlying platforms.
       setLogLevel(logLevel);
     }
+  }
+
+  clearListen() {
+    _scanPosResult.add(null);
+    _scanResults.add([]);
   }
 
   /// Starts a scan for Bluetooth Low Energy devices and returns a stream
@@ -182,13 +187,19 @@ class FlutterBlue {
     return _scanResults.value;
   }
 
-  Future writeByteData(List<int> value) async {
+  Future writePosByteData(
+      {required String address, required List<int> value}) async {
     try {
-      var result = await FlutterBlue.instance._channel
-          .invokeMethod('writeCharacteristic', Uint8List.fromList(value));
+      // Map<String, dynamic> map = Map();
+      // map["address"] = address;
+      // map["value"] = Uint8List.fromList(value);
+      var result = await FlutterBlue.instance._channel.invokeMethod(
+          'writePosCharacteristic',
+          {"address": address, "value": Uint8List.fromList(value)});
       return result;
     } catch (error) {
-      throw Exception(error);
+      print("writePosByteData----error");
+      throw error;
     }
   }
 

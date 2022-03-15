@@ -9,6 +9,8 @@ class BluetoothDevice {
   final String name;
   final BluetoothDeviceType type;
 
+  BluetoothDevice({required this.name,required this.id, this.type= BluetoothDeviceType.unknown});
+
   BluetoothDevice.fromProto(protos.BluetoothDevice p)
       : id = new DeviceIdentifier(p.remoteId),
         name = p.name,
