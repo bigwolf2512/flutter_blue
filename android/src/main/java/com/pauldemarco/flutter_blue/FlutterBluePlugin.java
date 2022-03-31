@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import androidx.core.app.ActivityCompat;
@@ -65,7 +66,7 @@ import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.common.PluginRegistry.RequestPermissionsResultListener;
 import print.Print;
 
-
+import java.util.Timer;
 /**
  * FlutterBluePlugin
  */
@@ -447,15 +448,31 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
             case "writePosCharacteristic":{
                 final byte[] data = (byte[]) ((Map<?, ?>) call.arguments()).get("value");
                 final String address = call.argument("address");
+                Log.d(TAG, "onMethodCall: "+ data.length);
                 if (address != null) {
                     try {
-                        final int resultPrint = Print.PortOpen(context, "Bluetooth," + address);
-                        if (resultPrint == 0) {
+
+                            final int resultPrint = Print.PortOpen(context, "Bluetooth," + address);
+                            if (resultPrint == 0) {
 //                            Print.WriteData("123abc\n".getBytes("GB2312"));
-                            Print.WriteData(data);
-                            Print.PortClose();
-                            return;
-                        }
+//                            Print.WriteData(data);
+//                            Print.PortClose();
+//                                return;
+
+                                Print.WriteData(data);
+                                new Timer("schedule", false).schedule(new TimerTask(){
+                                    @Override
+                                    public void run() {
+                                        try {
+                                            Print.PortClose();
+                                        } catch (Exception exception) {
+                                            exception.printStackTrace();
+                                        }
+                                    }
+                                },5000);
+                            }
+
+
                     } catch (Exception e) {
                         Log.d("xxxxx",e.getMessage());
                         e.printStackTrace();
@@ -654,6 +671,8 @@ public class FlutterBluePlugin implements FlutterPlugin, ActivityAware, MethodCa
             }
         }
     }
+
+
 
     @Override
     public boolean onRequestPermissionsResult(
